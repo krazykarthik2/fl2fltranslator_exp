@@ -1,0 +1,1 @@
+(fn (name subtract) (ret_type (type int)) (params (param (type int) (ident x)) (param (type int) (ident y))) (block (return (binop - (ident x) (ident y)))))

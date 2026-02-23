@@ -1,0 +1,1 @@
+(fn (name sum_range) (ret_type (type int)) (params (param (type int) (ident lo)) (param (type int) (ident hi))) (block (let (type int) (ident s) (literal 0)) (for (seq (let (type int) (ident i) (ident lo))) (binop <= (ident i) (ident hi)) (unop p++ (ident i)) (assign += (ident s) (ident i))) (return (ident s))))

@@ -1,0 +1,1 @@
+(fn (name fibonacci) (ret_type (type int)) (params (param (type int) (ident n))) (block (if (binop <= (ident n) (literal 1)) (return (ident n))) (return (binop + (call fibonacci (binop - (ident n) (literal 1))) (call fibonacci (binop - (ident n) (literal 2)))))))

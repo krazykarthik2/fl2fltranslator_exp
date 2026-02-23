@@ -1,0 +1,1 @@
+(fn (name increment_all) (ret_type (type void)) (params (param (ptr (mut) (type int)) (ident p)) (param (type int) (ident n))) (block (for (seq (let (type int) (ident i) (literal 0))) (binop < (ident i) (ident n)) (unop p++ (ident i)) (unop p++ (index (ident p) (ident i))))))

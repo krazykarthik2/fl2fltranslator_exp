@@ -1,0 +1,1 @@
+(fn (name triple) (ret_type (type int)) (params (param (type int) (ident x))) (block (let (type int) (ident r) (ident x)) (assign += (ident r) (ident x)) (assign += (ident r) (ident x)) (return (ident r))))

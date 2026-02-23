@@ -1,0 +1,1 @@
+(fn (name scale_array) (ret_type (type void)) (params (param (ptr (mut) (type int)) (ident arr)) (param (type int) (ident n)) (param (type int) (ident factor))) (block (for (seq (let (type int) (ident i) (literal 0))) (binop < (ident i) (ident n)) (unop p++ (ident i)) (assign *= (index (ident arr) (ident i)) (ident factor)))))
