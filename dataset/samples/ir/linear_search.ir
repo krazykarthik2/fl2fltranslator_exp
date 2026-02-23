@@ -1,0 +1,1 @@
+(fn (name linear_search) (ret_type (type int)) (params (param (ptr (mut) (type int)) (ident arr)) (param (type int) (ident n)) (param (type int) (ident target))) (block (for (seq (let (type int) (ident i) (literal 0))) (binop < (ident i) (ident n)) (unop p++ (ident i)) (if (binop == (index (ident arr) (ident i)) (ident target)) (return (ident i)))) (return (unop - (literal 1)))))

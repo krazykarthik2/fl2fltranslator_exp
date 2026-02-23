@@ -1,0 +1,1 @@
+(fn (name memset_zero) (ret_type (type void)) (params (param (ptr (mut) (type char)) (ident buf)) (param (type int) (ident n))) (block (for (seq (let (type int) (ident i) (literal 0))) (binop < (ident i) (ident n)) (unop p++ (ident i)) (assign = (index (ident buf) (ident i)) (literal 0)))))

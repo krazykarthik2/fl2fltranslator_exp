@@ -1,0 +1,1 @@
+(fn (name deref_add) (ret_type (type int)) (params (param (ptr (mut) (type int)) (ident a)) (param (ptr (mut) (type int)) (ident b))) (block (return (binop + (deref (ident a)) (deref (ident b))))))

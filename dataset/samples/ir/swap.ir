@@ -1,0 +1,1 @@
+(fn (name swap) (ret_type (type void)) (params (param (ptr (mut) (type int)) (ident a)) (param (ptr (mut) (type int)) (ident b))) (block (let (type int) (ident t) (deref (ident a))) (assign = (deref (ident a)) (deref (ident b))) (assign = (deref (ident b)) (ident t))))
