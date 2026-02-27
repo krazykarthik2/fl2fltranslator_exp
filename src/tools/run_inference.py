@@ -27,7 +27,15 @@ def find_latest_checkpoint(path: str) -> Optional[str]:
 
 
 def load_model_and_vocabs(stage: str, checkpoints_path: str):
-    if stage == "c2ir":
+    if stage == "c2rust":
+        from src.model.c_to_rust_model import CToRustModel
+        from src.training.train_c_to_rust import TrainingConfig
+        import sys
+        sys.modules["__main__"].TrainingConfig = TrainingConfig
+        src_ext, tgt_ext = ".c", ".rs"
+        ck_dir = checkpoints_path or "checkpoints/c_to_rust"
+        ModelClass = CToRustModel
+    elif stage == "c2ir":
         from src.model.c_to_ir_model import CToIRModel
         from src.training.train_c_to_ir import TrainingConfig
         import sys
@@ -140,7 +148,7 @@ def pretty_print_ir(tokens: str) -> str:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("stage", choices=["c2ir", "ir2rust"])
+    parser.add_argument("stage", choices=["c2rust", "c2ir", "ir2rust"])
     parser.add_argument("input", help="Path to input file containing source text")
     parser.add_argument("--checkpoint-dir", default=None)
     parser.add_argument("--max-len", type=int, default=256)
@@ -166,8 +174,8 @@ def main():
         print(f"{'='*60}\n")
 
     with torch.no_grad():
-        if args.stage == "c2ir":
-            # Stage 1: Get logits and aux predictions
+        if args.stage in ("c2rust", "c2ir"):
+            # Models with auxiliary heads: show latent-space analysis
             if not args.raw:
                 # Mock a target input for forward pass to get aux preds
                 logits, aux_preds = model(src_ids, torch.tensor([[bos]], device=device))
@@ -177,7 +185,7 @@ def main():
             
             if not args.raw:
                 # Print aux traits for first few tokens
-                print("--- Auxiliary Traits (Ownership/Mutability/Lifetime/Unsafe) ---")
+                print("--- Latent-Space Auxiliary Traits (Ownership/Mutability/Lifetime/Unsafe) ---")
                 from src.model.multitask_head import OwnershipClassifier, MutabilityClassifier, LifetimeClassifier, UnsafeClassifier
                 
                 # Get tokens for display

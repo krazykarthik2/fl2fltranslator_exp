@@ -16,6 +16,9 @@ build/
 # Weights & Biases
 wandb/
 
+# Checkpoints
+checkpoints/
+
 # Generated dataset (keep samples)
 dataset/generated/
 
