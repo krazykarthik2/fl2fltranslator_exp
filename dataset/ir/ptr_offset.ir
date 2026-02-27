@@ -1,0 +1,1 @@
+(fn (name ptr_offset) (ret_type (type int)) (params (param (type int *) (ident arr)) (param (type int) (ident idx))) (block (assign (ident _1) (ident (long long unsigned int) idx)) (assign (ident _2) (binop * (ident _1) (ident 4))) (assign (ident _3) (binop + (ident arr) (ident _2))) (assign (ident D.2756) (deref (ident _3)))))

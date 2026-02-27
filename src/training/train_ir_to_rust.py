@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
+# Ensure src is accessible
+sys.path.append(os.getcwd())
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -18,25 +21,26 @@ from src.training.train_c_to_ir import get_lr_scheduler
 
 @dataclass
 class TrainingConfig:
-    batch_size: int = 32
+    batch_size: int = 16
     learning_rate: float = 1e-4
-    n_epochs: int = 20
-    warmup_steps: int = 4000
+    n_epochs: int = 500
+    warmup_steps: int = 400
     max_src_len: int = 512
     max_tgt_len: int = 512
     src_vocab_size: int = 8000
     tgt_vocab_size: int = 8000
-    d_model: int = 512
+    d_model: int = 256
     n_heads: int = 8
-    n_layers: int = 6
-    d_ff: int = 2048
+    n_layers: int = 4
+    d_ff: int = 1024
     dropout: float = 0.1
     label_smoothing: float = 0.1
     save_dir: str = "checkpoints/ir_to_rust"
-    data_dir: str = "dataset/samples"
+    data_dir: str = "dataset"
     device: str = field(default_factory=lambda: "cuda" if torch.cuda.is_available() else "cpu")
     val_split: float = 0.1
-    log_interval: int = 10
+    log_interval: int = 1
+    save_interval: int = 50
 
 
 class Trainer:
@@ -64,10 +68,17 @@ class Trainer:
     def _build_dataloaders(self, dataset: TranslationDataset):
         n_val = max(1, int(len(dataset) * self.config.val_split))
         n_train = len(dataset) - n_val
-        train_ds, val_ds = random_split(dataset, [n_train, n_val])
-        train_dl = DataLoader(train_ds, batch_size=self.config.batch_size,
-                              shuffle=True, collate_fn=self.collator, drop_last=True)
-        val_dl = DataLoader(val_ds, batch_size=self.config.batch_size,
+        if n_train <= 0:
+            n_train = len(dataset)
+            n_val = 0
+            train_ds = dataset
+            val_ds = dataset
+        else:
+            train_ds, val_ds = random_split(dataset, [n_train, n_val])
+        
+        train_dl = DataLoader(train_ds, batch_size=min(self.config.batch_size, max(1, len(train_ds))),
+                              shuffle=True, collate_fn=self.collator, drop_last=False)
+        val_dl = DataLoader(val_ds, batch_size=min(self.config.batch_size, max(1, len(val_ds))),
                             shuffle=False, collate_fn=self.collator)
         return train_dl, val_dl
 
@@ -126,6 +137,8 @@ class Trainer:
             "optimizer_state_dict": self.optimizer.state_dict(),
             "loss": loss,
             "config": self.config,
+            "src_vocab": getattr(self, "src_vocab", None),
+            "tgt_vocab": getattr(self, "tgt_vocab", None),
         }, path)
         print(f"  Saved checkpoint: {path}")
 
@@ -133,16 +146,30 @@ class Trainer:
         ckpt = torch.load(path, map_location=self.device)
         self.model.load_state_dict(ckpt["model_state_dict"])
         self.optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+        if "src_vocab" in ckpt:
+            self.src_vocab = ckpt["src_vocab"]
+        if "tgt_vocab" in ckpt:
+            self.tgt_vocab = ckpt["tgt_vocab"]
         print(f"  Loaded checkpoint from {path}")
 
     def train(self, dataset: Optional[TranslationDataset] = None) -> None:
         if dataset is None:
             from src.data.dataset import load_dataset_from_dir
+            # Map .rs to rust directory if needed by ensuring load_dataset_from_dir handles subdirs
             dataset = load_dataset_from_dir(
                 self.config.data_dir, src_ext=".ir", tgt_ext=".rs",
+                src_vocab=getattr(self, "src_vocab", None),
+                tgt_vocab=getattr(self, "tgt_vocab", None),
                 max_src_len=self.config.max_src_len,
                 max_tgt_len=self.config.max_tgt_len,
             )
+        self.src_vocab = dataset.src_vocab
+        self.tgt_vocab = dataset.tgt_vocab
+
+        if len(dataset) == 0:
+            print("Warning: Dataset is empty! Skipping training.")
+            return
+            
         train_dl, val_dl = self._build_dataloaders(dataset)
         print(f"Training on {len(train_dl.dataset)} samples, "
               f"validating on {len(val_dl.dataset)} samples")
@@ -151,11 +178,12 @@ class Trainer:
             train_loss = self.train_epoch(train_dl)
             val_loss = self.validate(val_dl)
             print(f"  train_loss={train_loss:.4f}  val_loss={val_loss:.4f}")
-            self.save_checkpoint(epoch, val_loss)
+            if epoch % self.config.save_interval == 0 or epoch == self.config.n_epochs:
+                self.save_checkpoint(epoch, val_loss)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train IR→Rust model (Stage 2)")
+    parser = argparse.ArgumentParser(description="Train IR ->Rust model (Stage 2)")
     parser.add_argument("--data-dir", default="dataset/samples")
     parser.add_argument("--save-dir", default="checkpoints/ir_to_rust")
     parser.add_argument("--epochs", type=int, default=20)

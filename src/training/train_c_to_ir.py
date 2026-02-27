@@ -1,5 +1,6 @@
 """Stage 1 training script: C source → IR."""
 from __future__ import annotations
+print("DEBUG: Script starting...")
 
 import argparse
 import os
@@ -75,10 +76,17 @@ class Trainer:
     def _build_dataloaders(self, dataset: TranslationDataset):
         n_val = max(1, int(len(dataset) * self.config.val_split))
         n_train = len(dataset) - n_val
-        train_ds, val_ds = random_split(dataset, [n_train, n_val])
-        train_dl = DataLoader(train_ds, batch_size=self.config.batch_size,
-                              shuffle=True, collate_fn=self.collator, drop_last=True)
-        val_dl = DataLoader(val_ds, batch_size=self.config.batch_size,
+        if n_train <= 0:
+            n_train = len(dataset)
+            n_val = 0
+            train_ds = dataset
+            val_ds = dataset
+        else:
+            train_ds, val_ds = random_split(dataset, [n_train, n_val])
+            
+        train_dl = DataLoader(train_ds, batch_size=min(self.config.batch_size, max(1, len(train_ds))),
+                              shuffle=True, collate_fn=self.collator, drop_last=False)
+        val_dl = DataLoader(val_ds, batch_size=min(self.config.batch_size, max(1, len(val_ds))),
                             shuffle=False, collate_fn=self.collator)
         return train_dl, val_dl
 
@@ -150,6 +158,8 @@ class Trainer:
             "optimizer_state_dict": self.optimizer.state_dict(),
             "loss": loss,
             "config": self.config,
+            "src_vocab": getattr(self, "src_vocab", None),
+            "tgt_vocab": getattr(self, "tgt_vocab", None),
         }, path)
         print(f"  Saved checkpoint: {path}")
 
@@ -157,16 +167,31 @@ class Trainer:
         ckpt = torch.load(path, map_location=self.device)
         self.model.load_state_dict(ckpt["model_state_dict"])
         self.optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+        if "src_vocab" in ckpt:
+            self.src_vocab = ckpt["src_vocab"]
+        if "tgt_vocab" in ckpt:
+            self.tgt_vocab = ckpt["tgt_vocab"]
         print(f"  Loaded checkpoint from {path}")
 
     def train(self, dataset: Optional[TranslationDataset] = None) -> None:
         if dataset is None:
             from src.data.dataset import load_dataset_from_dir
+            print(f"Loading dataset from {self.config.data_dir}...")
             dataset = load_dataset_from_dir(
                 self.config.data_dir, src_ext=".c", tgt_ext=".ir",
+                src_vocab=getattr(self, "src_vocab", None),
+                tgt_vocab=getattr(self, "tgt_vocab", None),
                 max_src_len=self.config.max_src_len,
                 max_tgt_len=self.config.max_tgt_len,
             )
+            print(f"Dataset loaded: {len(dataset)} pairs found.")
+        self.src_vocab = dataset.src_vocab
+        self.tgt_vocab = dataset.tgt_vocab
+
+        if len(dataset) == 0:
+            print("Warning: Dataset is empty! Skipping training.")
+            return
+            
         train_dl, val_dl = self._build_dataloaders(dataset)
         print(f"Training on {len(train_dl.dataset)} samples, "
               f"validating on {len(val_dl.dataset)} samples")

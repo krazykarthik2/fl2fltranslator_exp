@@ -101,6 +101,9 @@ def load_dataset_from_dir(
     """
     src_dir = os.path.join(data_dir, src_ext.lstrip("."))
     tgt_dir = os.path.join(data_dir, tgt_ext.lstrip("."))
+    # Special case for .rs -> rust folder
+    if tgt_ext == ".rs" and not os.path.isdir(tgt_dir):
+        tgt_dir = os.path.join(data_dir, "rust")
 
     if os.path.isdir(src_dir) and os.path.isdir(tgt_dir):
         src_files = sorted(f for f in os.listdir(src_dir) if f.endswith(src_ext))
@@ -119,7 +122,7 @@ def load_dataset_from_dir(
         src_files = sorted(f for f in os.listdir(data_dir) if f.endswith(src_ext))
         pairs = []
         for sf in src_files:
-            stem = os.path.splitext(sf)[0]
+            stem = sf[:-len(src_ext)]
             tf = stem + tgt_ext
             if os.path.exists(os.path.join(data_dir, tf)):
                 with open(os.path.join(data_dir, sf), encoding="utf-8") as fh:

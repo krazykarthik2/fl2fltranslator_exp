@@ -1,0 +1,1 @@
+call modelctl.bat c2ir aigen.c "checkpoints/c_to_ir/epoch_001_loss_8.9748.pt"

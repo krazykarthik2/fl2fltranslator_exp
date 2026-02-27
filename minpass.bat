@@ -1,0 +1,1 @@
+call modelctl.bat c2ir "dataset/samples/c/reverse_array.c" "checkpoints/c_to_ir/epoch_001_loss_8.8402.pt"
