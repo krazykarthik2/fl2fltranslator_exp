@@ -14,7 +14,14 @@ from src.model.c_to_rust_model import CToRustModel
 from src.model.transformer import TransformerConfig
 from src.tokenizer.c_tokenizer import CTokenizer
 from src.data.dataset import TranslationDataset, DataCollator
-from src.training.train_c_to_ir import get_lr_scheduler
+
+
+def get_lr_scheduler(optimizer: torch.optim.Optimizer, d_model: int, warmup_steps: int):
+    """Transformer warmup-then-decay learning rate schedule."""
+    def lr_lambda(step: int) -> float:
+        step = max(step, 1)
+        return (d_model ** -0.5) * min(step ** -0.5, step * warmup_steps ** -1.5)
+    return torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
 
 @dataclass

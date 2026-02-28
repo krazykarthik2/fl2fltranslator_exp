@@ -1,1 +1,0 @@
-(fn (name ptr_offset) (ret_type (type int)) (params (param (ptr (mut) (type int)) (ident arr)) (param (type int) (ident idx))) (block (return (deref (binop + (ident arr) (ident idx))))))

@@ -1,1 +1,0 @@
-(fn (name subtract) (ret_type (type int)) (params (param (type int) (ident x)) (param (type int) (ident y))) (block (assign (ident D.2756) (ident x - y))))

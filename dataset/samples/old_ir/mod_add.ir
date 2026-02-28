@@ -1,1 +1,0 @@
-(fn (name mod_add) (ret_type (type int)) (params (param (type int) (ident a)) (param (type int) (ident b)) (param (type int) (ident m))) (block (return (binop % (binop + (ident a) (ident b)) (ident m)))))

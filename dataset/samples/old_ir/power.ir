@@ -1,1 +1,0 @@
-(fn (name power) (ret_type (type long)) (params (param (type long) (ident base)) (param (type int) (ident exp))) (block (let (type long) (ident r) (literal 1)) (while (binop > (ident exp) (literal 0)) (block (assign *= (ident r) (ident base)) (unop p-- (ident exp)))) (return (ident r))))

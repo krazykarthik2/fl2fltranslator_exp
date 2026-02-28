@@ -117,20 +117,9 @@ Each head is a single linear projection from the latent space: `Linear(d_model �
 
 ---
 
-## 5. Legacy Two-Stage Models (retained for reference)
+## 5. Metadata and Persistence
 
-The original two-stage pipeline is still available in the codebase:
-
-- **`src/model/c_to_ir_model.py`** (`CToIRModel`): C tokens → S-expression IR tokens.
-- **`src/model/ir_to_rust_model.py`** (`IRToRustModel`): IR tokens → Rust tokens.
-
-The new unified `CToRustModel` supersedes these by eliminating the explicit IR bottleneck.
-
----
-
-## 6. Metadata and Persistence
-
-### 6.1 Checkpoint Structure (`.pt` files)
+### 5.1 Checkpoint Structure (`.pt` files)
 Every checkpoint is a dictionary containing:
 - `model_state_dict`: Weights for all model parameters.
 - `optimizer_state_dict`: Optimizer states for resuming training.
@@ -140,7 +129,7 @@ Every checkpoint is a dictionary containing:
 - `epoch`: Current training epoch.
 - `loss`: Validation loss at the time of saving.
 
-### 6.2 Tokenization (`src/tokenizer/c_tokenizer.py`)
+### 5.2 Tokenization (`src/tokenizer/c_tokenizer.py`)
 - **Tokenizer**: Regex-based, whitespace/comment agnostic.
 - **Special Tokens**:
   - `<PAD>` (0): Padding
@@ -150,27 +139,27 @@ Every checkpoint is a dictionary containing:
 
 ---
 
-## 7. Execution Flow (Inference)
+## 6. Execution Flow (Inference)
 
 1. **Input**: C source file (`.c`).
 2. **Tokenizer**: Encodes text using the **embedded vocabulary** from the checkpoint.
 3. **Inference**: The unified model encodes C → latent-space IR → decodes to Rust in a single forward pass. Auxiliary heads can be queried to inspect the latent-space predictions.
 4. **Output**: Rust source code.
 
-### 7.1 Tooling and Utilities
+### 6.1 Tooling and Utilities
 
 - **`modelctl.bat`**: CLI entry point for running inference.
-- **`convert.bat`**: Unified pipeline script to convert a C file to Rust.
+- **`convert.bat`**: Pipeline script to convert a C file to Rust.
 - **`run_inference.py`**: The core inference driver.
-  - **Stages**: `c2rust` (recommended), `c2ir` (legacy Stage 1), `ir2rust` (legacy Stage 2).
+  - **Stage**: `c2rust` — translates C to Rust via latent-space IR.
   - **`--raw` Flag**: Suppresses headers, auxiliary traits, and pretty-printing. Used for pipeline chaining.
 
-### 7.2 Performance and Convergence
+### 6.2 Performance and Convergence
 The model uses a fixed vocabulary capacity of 8000. During early training epochs (e.g., loss > 5.0), the model may output `<UNK>` tokens or generic patterns from the training set as it has not yet converged on the translation task.
 
 ---
 
-## 8. Self-Play Refinement
+## 7. Self-Play Refinement
 
 ```
 C source

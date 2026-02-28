@@ -1,1 +1,0 @@
-(fn (name factorial) (ret_type (type int)) (params (param (type int) (ident n))) (block (if (binop <= (ident n) (literal 1)) (return (literal 1))) (return (binop * (ident n) (call factorial (binop - (ident n) (literal 1)))))))

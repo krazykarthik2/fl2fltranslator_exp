@@ -1,1 +1,0 @@
-(fn (name gcd) (ret_type (type int)) (params (param (type int) (ident a)) (param (type int) (ident b))) (block (while (binop != (ident b) (literal 0)) (block (let (type int) (ident t) (ident b)) (assign = (ident b) (binop % (ident a) (ident b))) (assign = (ident a) (ident t)))) (return (ident a))))

@@ -1,1 +1,0 @@
-(fn (name toggle_bit) (ret_type (type int)) (params (param (type int) (ident x)) (param (type int) (ident bit))) (block (return (binop ^ (ident x) (binop << (literal 1) (ident bit))))))

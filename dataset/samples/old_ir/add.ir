@@ -1,1 +1,0 @@
-(fn (name add) (ret_type (type int)) (params (param (type int) (ident a)) (param (type int) (ident b))) (block (return (binop + (ident a) (ident b)))))
