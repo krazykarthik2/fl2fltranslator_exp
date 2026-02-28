@@ -1,1 +1,0 @@
-(fn (name abs_val) (ret_type (type int)) (params (param (type int) (ident x))) (block (if (binop < (ident x) (literal 0)) (return (unop - (ident x)))) (return (ident x))))

@@ -8,7 +8,6 @@ setup(
     install_requires=[
         "torch>=2.0.0",
         "numpy>=1.24.0",
-        "pycparser>=2.21",
         "tqdm>=4.65.0",
     ],
 )

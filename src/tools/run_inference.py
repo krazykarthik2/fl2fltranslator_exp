@@ -1,8 +1,7 @@
 r"""Small inference helper used by `modelctl.bat`.
 
-Usage examples:
-  python src\tools\run_inference.py c2ir path\to\input.c --checkpoint-dir checkpoints\c_to_ir
-  python src\tools\run_inference.py ir2rust path\to\input.ir
+Usage example:
+  python src\tools\run_inference.py c2rust path\to\input.c --checkpoint-dir checkpoints\c_to_rust
 """
 from __future__ import annotations
 
@@ -27,30 +26,13 @@ def find_latest_checkpoint(path: str) -> Optional[str]:
 
 
 def load_model_and_vocabs(stage: str, checkpoints_path: str):
-    if stage == "c2rust":
-        from src.model.c_to_rust_model import CToRustModel
-        from src.training.train_c_to_rust import TrainingConfig
-        import sys
-        sys.modules["__main__"].TrainingConfig = TrainingConfig
-        src_ext, tgt_ext = ".c", ".rs"
-        ck_dir = checkpoints_path or "checkpoints/c_to_rust"
-        ModelClass = CToRustModel
-    elif stage == "c2ir":
-        from src.model.c_to_ir_model import CToIRModel
-        from src.training.train_c_to_ir import TrainingConfig
-        import sys
-        sys.modules["__main__"].TrainingConfig = TrainingConfig
-        src_ext, tgt_ext = ".c", ".ir"
-        ck_dir = checkpoints_path or "checkpoints/c_to_ir"
-        ModelClass = CToIRModel
-    else:
-        from src.model.ir_to_rust_model import IRToRustModel
-        from src.training.train_ir_to_rust import TrainingConfig
-        import sys
-        sys.modules["__main__"].TrainingConfig = TrainingConfig
-        src_ext, tgt_ext = ".ir", ".rs"
-        ck_dir = checkpoints_path or "checkpoints/ir_to_rust"
-        ModelClass = IRToRustModel
+    from src.model.c_to_rust_model import CToRustModel
+    from src.training.train_c_to_rust import TrainingConfig
+    import sys
+    sys.modules["__main__"].TrainingConfig = TrainingConfig
+    src_ext, tgt_ext = ".c", ".rs"
+    ck_dir = checkpoints_path or "checkpoints/c_to_rust"
+    ModelClass = CToRustModel
 
     ckpt_path = find_latest_checkpoint(ck_dir)
     if ckpt_path is None:
@@ -130,25 +112,9 @@ def decode_ids(ids: torch.Tensor, vocab: dict) -> str:
     return " ".join(toks)
 
 
-def pretty_print_ir(tokens: str) -> str:
-    """Basic auto-indentation for S-expression IR."""
-    indent = 0
-    res = []
-    for tok in tokens.split():
-        if tok.startswith("("):
-            res.append("\n" + "  " * indent + tok)
-            indent += 1
-        elif tok.endswith(")"):
-            indent = max(0, indent - 1)
-            res.append(tok)
-        else:
-            res.append(tok)
-    return " ".join(res).strip()
-
-
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("stage", choices=["c2rust", "c2ir", "ir2rust"])
+    parser.add_argument("stage", choices=["c2rust"])
     parser.add_argument("input", help="Path to input file containing source text")
     parser.add_argument("--checkpoint-dir", default=None)
     parser.add_argument("--max-len", type=int, default=256)
@@ -174,53 +140,47 @@ def main():
         print(f"{'='*60}\n")
 
     with torch.no_grad():
-        if args.stage in ("c2rust", "c2ir"):
-            # Models with auxiliary heads: show latent-space analysis
-            if not args.raw:
-                # Mock a target input for forward pass to get aux preds
-                logits, aux_preds = model(src_ids, torch.tensor([[bos]], device=device))
+        # Model with auxiliary heads: show latent-space analysis
+        if not args.raw:
+            # Mock a target input for forward pass to get aux preds
+            logits, aux_preds = model(src_ids, torch.tensor([[bos]], device=device))
+        
+        # Generate the main output
+        out = model.generate(src_ids, max_len=args.max_len, bos_idx=bos, eos_idx=eos)
+        
+        if not args.raw:
+            # Print aux traits for first few tokens
+            print("--- Latent-Space Auxiliary Traits (Ownership/Mutability/Lifetime/Unsafe) ---")
+            from src.model.multitask_head import OwnershipClassifier, MutabilityClassifier, LifetimeClassifier, UnsafeClassifier
             
-            # Generate the main output
-            out = model.generate(src_ids, max_len=args.max_len, bos_idx=bos, eos_idx=eos)
+            # Get tokens for display
+            tok_obj = CTokenizer()
+            src_tokens = tok_obj.tokenize(src_text)
             
-            if not args.raw:
-                # Print aux traits for first few tokens
-                print("--- Latent-Space Auxiliary Traits (Ownership/Mutability/Lifetime/Unsafe) ---")
-                from src.model.multitask_head import OwnershipClassifier, MutabilityClassifier, LifetimeClassifier, UnsafeClassifier
+            # Encoder output for aux heads
+            memory = model.seq2seq.encode(src_ids)
+            aux_results = model.aux_head(memory)
+            
+            for i, t in enumerate(src_tokens[:20]): # Show first 20 tokens
+                if i + 1 >= memory.size(1): break
+                idx = i + 1 # skip BOS
                 
-                # Get tokens for display
-                tok_obj = CTokenizer()
-                src_tokens = tok_obj.tokenize(src_text)
+                own = aux_results["ownership"][0, idx].argmax().item()
+                mut = aux_results["mutability"][0, idx].argmax().item()
+                life = aux_results["lifetime"][0, idx].argmax().item()
+                uns = aux_results["unsafe"][0, idx].argmax().item()
                 
-                # Encoder output for aux heads
-                memory = model.seq2seq.encode(src_ids)
-                aux_results = model.aux_head(memory)
-                
-                for i, t in enumerate(src_tokens[:20]): # Show first 20 tokens
-                    if i + 1 >= memory.size(1): break
-                    idx = i + 1 # skip BOS
-                    
-                    own = aux_results["ownership"][0, idx].argmax().item()
-                    mut = aux_results["mutability"][0, idx].argmax().item()
-                    life = aux_results["lifetime"][0, idx].argmax().item()
-                    uns = aux_results["unsafe"][0, idx].argmax().item()
-                    
-                    print(f"  {t:12} | own: {OwnershipClassifier.LABELS[own]:12} | mut: {MutabilityClassifier.LABELS[mut]:10} | life: {LifetimeClassifier.LABELS[life]:10} | uns: {UnsafeClassifier.LABELS[uns]}")
-                if len(src_tokens) > 20:
-                    print("  ...")
-                print()
-        else:
-            out = model.generate(src_ids, max_len=args.max_len, bos_idx=bos, eos_idx=eos)
+                print(f"  {t:12} | own: {OwnershipClassifier.LABELS[own]:12} | mut: {MutabilityClassifier.LABELS[mut]:10} | life: {LifetimeClassifier.LABELS[life]:10} | uns: {UnsafeClassifier.LABELS[uns]}")
+            if len(src_tokens) > 20:
+                print("  ...")
+            print()
 
     # out: (B, T)
     out_tokens = decode_ids(out[0], tgt_vocab)
     
     if not args.raw:
         print("--- Translated Output ---")
-        if args.stage == "c2ir":
-            print(pretty_print_ir(out_tokens))
-        else:
-            print(out_tokens)
+        print(out_tokens)
         print(f"\n{'='*60}\n")
     else:
         # Raw output

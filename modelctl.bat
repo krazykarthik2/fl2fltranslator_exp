@@ -2,25 +2,24 @@
 setlocal
 
 if "%1"=="" (
-  echo Usage: modelctl.bat [stage] [input_file] [checkpoint_dir] [device]
-  echo Stages: c2ir, ir2rust
+  echo Usage: modelctl.bat [input_file] [checkpoint_dir] [device]
+  echo Translates C source to Rust via latent-space IR
   goto end
 )
 
-set STAGE=%1
-set INPUT=%2
-set CKDIR=%3
-set DEVICE=%4
+set INPUT=%1
+set CKDIR=%2
+set DEVICE=%3
 
-rem Heuristic: if %2 is a .pt and %3 is a source file, they might be swapped
+rem Heuristic: if %1 is a .pt and %2 is a source file, they might be swapped
 echo "%INPUT%" | findstr /i ".pt" >nul
 if not errorlevel 1 (
   if not "%CKDIR%"=="" (
-    echo "%CKDIR%" | findstr /i ".c .ir .rs" >nul
+    echo "%CKDIR%" | findstr /i ".c .rs" >nul
     if not errorlevel 1 (
-      echo Swapping detected args: using %3 as input and %2 as checkpoint
-      set INPUT=%3
-      set CKDIR=%2
+      echo Swapping detected args: using %2 as input and %1 as checkpoint
+      set INPUT=%2
+      set CKDIR=%1
     )
   )
 )
@@ -42,7 +41,7 @@ if not exist .venv\Scripts\activate.bat (
   call .venv\Scripts\activate.bat
 )
 
-set ARGS=%STAGE% %INPUT%
+set ARGS=c2rust %INPUT%
 if not "%CKDIR%"=="" set ARGS=%ARGS% --checkpoint-dir %CKDIR%
 if not "%DEVICE%"=="" set ARGS=%ARGS% --device %DEVICE%
 

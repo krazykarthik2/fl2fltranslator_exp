@@ -1,1 +1,0 @@
-(fn (name set_bit) (ret_type (type int)) (params (param (type int) (ident x)) (param (type int) (ident bit))) (block (assign (ident _1) (ident 1 << bit)) (assign (ident D.2756) (ident x | _1))))

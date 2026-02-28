@@ -34,32 +34,25 @@ fl2fltranslator_exp/
 ├── src/
 │   ├── tokenizer/
 │   │   └── c_tokenizer.py          # Regex-based C lexer + vocab builder
-│   ├── ir/
-│   │   ├── ir_types.py             # IRNode dataclass + S-expression serialization
-│   │   ├── c_to_ir.py              # pycparser-based C → IR converter (legacy)
-│   │   └── ir_to_rust.py           # IR → Rust emitter (legacy)
 │   ├── model/
 │   │   ├── transformer.py          # Full encoder-decoder transformer (~40M params)
 │   │   ├── multitask_head.py       # Ownership/mutability/lifetime/unsafe heads
-│   │   ├── c_to_rust_model.py      # Unified model: C → latent-space IR → Rust
-│   │   ├── c_to_ir_model.py        # Legacy Stage 1 model (C → IR + aux heads)
-│   │   └── ir_to_rust_model.py     # Legacy Stage 2 model (IR → Rust)
+│   │   └── c_to_rust_model.py      # Unified model: C → latent-space IR → Rust
 │   ├── data/
 │   │   ├── synthetic_gen.py        # Synthetic C function generator (23+ templates)
 │   │   └── dataset.py              # TranslationDataset + DataCollator
 │   ├── feedback/
 │   │   ├── cargo_checker.py        # Runs `cargo check` on generated Rust
 │   │   └── error_parser.py         # Parses cargo JSON output into CompileError
+│   ├── tools/
+│   │   └── run_inference.py        # CLI inference driver (c2rust)
 │   └── training/
-│       ├── train_c_to_rust.py      # Unified training loop (C → Rust)
-│       ├── train_c_to_ir.py        # Legacy Stage 1 training loop
-│       ├── train_ir_to_rust.py     # Legacy Stage 2 training loop
+│       ├── train_c_to_rust.py      # Training loop (C → Rust via latent-space IR)
 │       └── self_play.py            # Self-play refinement loop
 ├── dataset/
 │   └── samples/
 │       ├── c/                      # 51 example C functions
-│       ├── rust/                   # Corresponding Rust functions
-│       └── old_ir/                 # Legacy IR S-expressions
+│       └── rust/                   # Corresponding Rust functions
 ├── ARCHITECTURE.md
 ├── requirements.txt
 └── setup.py
@@ -70,14 +63,8 @@ fl2fltranslator_exp/
 ```bash
 pip install -r requirements.txt
 
-# Train the unified C → Rust model (recommended)
+# Train the unified C → Rust model
 python -m src.training.train_c_to_rust --data-dir dataset/samples --epochs 20
-
-# Legacy: Train Stage 1 (C → IR)
-python -m src.training.train_c_to_ir --data-dir dataset/samples --epochs 20
-
-# Legacy: Train Stage 2 (IR → Rust)
-python -m src.training.train_ir_to_rust --data-dir dataset/samples --epochs 20
 ```
 
 ## Latent-Space IR
@@ -171,3 +158,15 @@ class TrainingConfig:
     aux_loss_weight: float = 0.1      # Weight for auxiliary heads
     label_smoothing: float = 0.1
 ```
+
+## Batch Scripts
+
+| Script | Purpose | Usage |
+|--------|---------|-------|
+| `do.bat setup` | Create venv, install deps | Before first run |
+| `do.bat quick` | Train model for 1 epoch | Verify pipeline works |
+| `do.bat train` | Train C→Rust model | Full training |
+| `do.bat test` | Run pytest | Validate code |
+| `do.bat all` | Train + test | Full pipeline |
+| `modelctl.bat input.c [checkpoint_dir]` | Run inference | Convert C→Rust |
+| `convert.bat input.c [output.rs]` | Convert C file to Rust | End-to-end conversion |

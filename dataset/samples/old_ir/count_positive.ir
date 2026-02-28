@@ -1,1 +1,0 @@
-(fn (name count_positive) (ret_type (type int)) (params (param (ptr (mut) (type int)) (ident arr)) (param (type int) (ident n))) (block (let (type int) (ident c) (literal 0)) (for (seq (let (type int) (ident i) (literal 0))) (binop < (ident i) (ident n)) (unop p++ (ident i)) (if (binop > (index (ident arr) (ident i)) (literal 0)) (unop p++ (ident c)))) (return (ident c))))

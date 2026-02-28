@@ -1,5 +1,5 @@
 @echo off
-rem Simple helper to setup env, train models, run tests, and save artifacts
+rem Simple helper to setup env, train the C->Rust model, run tests, and save artifacts
 setlocal
 
 if "%1"=="" (
@@ -22,8 +22,7 @@ rem Quick mode runs short jobs (1 epoch) to verify pipeline
 if /I "%CMD%"=="quick" (
   echo Running quick setup + train ^(1 epoch^)
   set PYTHONPATH=%~dp0
-  python src\training\train_c_to_ir.py --epochs 1
-  python src\training\train_ir_to_rust.py --epochs 1
+  python src\training\train_c_to_rust.py --epochs 1
   goto end
 )
 
@@ -32,24 +31,13 @@ if /I "%CMD%"=="setup" (
   goto end
 )
 
-if /I "%CMD%"=="train-c2ir" (
-  echo Training C->IR model (use EPOCHS env var to override)
+if /I "%CMD%"=="train" (
+  echo Training C-^>Rust model (use EPOCHS env var to override)
   set PYTHONPATH=%~dp0
   if "%EPOCHS%"=="" (
-    python src\training\train_c_to_ir.py
+    python src\training\train_c_to_rust.py
   ) else (
-    python src\training\train_c_to_ir.py --epochs %EPOCHS%
-  )
-  goto end
-)
-
-if /I "%CMD%"=="train-ir2rust" (
-  echo Training IR->Rust model (use EPOCHS env var to override)
-  set PYTHONPATH=%~dp0
-  if "%EPOCHS%"=="" (
-    python src\training\train_ir_to_rust.py
-  ) else (
-    python src\training\train_ir_to_rust.py --epochs %EPOCHS%
+    python src\training\train_c_to_rust.py --epochs %EPOCHS%
   )
   goto end
 )
@@ -62,15 +50,12 @@ if /I "%CMD%"=="test" (
 )
 
 if /I "%CMD%"=="all" (
-  echo Full pipeline: train both models and run tests
+  echo Full pipeline: train model and run tests
   set PYTHONPATH=%~dp0
-  rem Train stage1 then stage2
   if "%EPOCHS%"=="" (
-    python src\training\train_c_to_ir.py
-    python src\training\train_ir_to_rust.py
+    python src\training\train_c_to_rust.py
   ) else (
-    python src\training\train_c_to_ir.py --epochs %EPOCHS%
-    python src\training\train_ir_to_rust.py --epochs %EPOCHS%
+    python src\training\train_c_to_rust.py --epochs %EPOCHS%
   )
   echo Running tests
   python -m pytest -q

@@ -1,1 +1,0 @@
-(fn (name negate) (ret_type (type int)) (params (param (type int) (ident x))) (block (return (unop - (ident x)))))

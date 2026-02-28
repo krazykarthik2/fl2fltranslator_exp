@@ -1,1 +1,0 @@
-(fn (name set_via_ptr) (ret_type (type void)) (params (param (ptr (mut) (type int)) (ident p)) (param (type int) (ident val))) (block (assign = (deref (ident p)) (ident val))))

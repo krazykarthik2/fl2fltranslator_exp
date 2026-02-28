@@ -1,1 +1,0 @@
-(fn (name multiply) (ret_type (type long)) (params (param (type long) (ident a)) (param (type long) (ident b))) (block (return (binop * (ident a) (ident b)))))

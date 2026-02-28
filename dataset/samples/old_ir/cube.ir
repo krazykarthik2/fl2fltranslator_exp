@@ -1,1 +1,0 @@
-(fn (name cube) (ret_type (type long)) (params (param (type long) (ident x))) (block (return (binop * (binop * (ident x) (ident x)) (ident x)))))

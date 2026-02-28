@@ -1,1 +1,0 @@
- (block (let (type long int) (ident r)) (assign (ident r) (ident 1)) (goto (label <D.2757>)) (label <D.2758>) (assign (ident r) (binop * (ident r) (ident base))) (assign (ident exp) (binop + (ident exp) (ident -1))) (label <D.2757>) (if (expr exp > 0) (goto (label <D.2758>)) (goto (label <D.2756>))) (label <D.2756>) (assign (ident D.2760) (ident r))))

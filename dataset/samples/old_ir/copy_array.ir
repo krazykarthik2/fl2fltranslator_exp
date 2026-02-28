@@ -1,1 +1,0 @@
-(fn (name copy_array) (ret_type (type void)) (params (param (ptr (mut) (type int)) (ident dst)) (param (ptr (mut) (type int)) (ident src)) (param (type int) (ident n))) (block (for (seq (let (type int) (ident i) (literal 0))) (binop < (ident i) (ident n)) (unop p++ (ident i)) (assign = (index (ident dst) (ident i)) (index (ident src) (ident i))))))
