@@ -1,0 +1,1 @@
+ (block (assign (ident D.2756) (binop * (ident a) (ident b)))))

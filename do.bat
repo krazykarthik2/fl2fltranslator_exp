@@ -20,7 +20,7 @@ if exist requirements.txt (
 
 rem Quick mode runs short jobs (1 epoch) to verify pipeline
 if /I "%CMD%"=="quick" (
-  echo Running quick setup + train (1 epoch)
+  echo Running quick setup + train ^(1 epoch^)
   set PYTHONPATH=%~dp0
   python src\training\train_c_to_ir.py --epochs 1
   python src\training\train_ir_to_rust.py --epochs 1

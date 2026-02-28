@@ -1,0 +1,1 @@
+(fn (name clear_bit) (ret_type (type int)) (params (param (type int) (ident x)) (param (type int) (ident bit))) (block (assign (ident _1) (ident 1 << bit)) (assign (ident _2) (ident ~_1)) (assign (ident D.2756) (ident x & _2))))

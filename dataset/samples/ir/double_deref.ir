@@ -1,0 +1,1 @@
+(fn (name double_deref) (ret_type (type int)) (params (param (type int * *) (ident pp))) (block (assign (ident _1) (deref (ident pp))) (assign (ident D.2755) (deref (ident _1)))))

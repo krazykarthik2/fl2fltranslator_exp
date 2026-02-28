@@ -9,7 +9,7 @@ sys.path.append(os.getcwd())
 from src.tools.gimple_parser import parse_gimple
 
 C_DIR = "dataset/samples/c"
-OUT_DIR = "dataset/gimple_ir"
+OUT_DIR = "dataset/samples/ir"
 
 if not os.path.exists(OUT_DIR):
     os.makedirs(OUT_DIR)
